@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Database Integration</title>
+</head>
+<body>
+    <input type="text" id="inputBox" placeholder="Enter something">
+    <button onclick="submitData()">Submit</button>
+
+    <script>
+        function submitData() {
+            const content = document.getElementById("inputBox").value;
+            fetch("http://127.0.0.1:5000/submit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content })
+            }).then(response => response.json())
+              .then(data => alert(data.message));
+        }
+    </script>
+</body>
+</html>
