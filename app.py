@@ -39,15 +39,18 @@ def get_messages():
 @app.route('/submit', methods=['POST'])
 def submit():
     data = request.json
-    content = data.get("content")
+    messages = data.get("content", [])
 
-    if content:
+    if messages:
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO messages (content) VALUES (?)", (content,))
+
+        for message in messages:
+            cursor.execute("INSERT INTO messages (content) VALUES (?)", (message.strip(),))
+
         conn.commit()
         conn.close()
-        return jsonify({"message": "Message added successfully"}), 201
+        return jsonify({"message": f"{len(messages)} message(s) added successfully"}), 201
 
     return jsonify({"error": "Message content is required"}), 400
 

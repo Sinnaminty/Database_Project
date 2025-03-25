@@ -83,10 +83,12 @@
                 let deleteMatch = input.match(/^:d (.+)$/);
 
                 if (addMatch) {
+                    let messages = addMatch[1].split(',').map(msg => msg.trim());
+                    
                     fetch("/submit", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ content: addMatch[1] })
+                        body: JSON.stringify({ content: messages })
                     })
                         .then(response => response.json())
                         .then(data => {
