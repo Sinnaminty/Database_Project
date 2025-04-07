@@ -56,90 +56,208 @@
             width: 10%;
         }
     </style>
+    
+</head>
+
+<body onload="fetchCustomers()">
+    <h1>Technician Page</h1>
+    <p id="responseBox"></p>
+    <h2>Add Customer</h2>
+    <form id="addCustomerForm">
+        First Name: <input type="text" id="customerFirstName">
+        Last Name: <input type="text" id="customerLastName">
+        Phone Number: <input type="text" id="customerPhoneNumber">
+        <button type="submit">Add Customer</button>
+    </form>
+
+    <h2>Add Car</h2>
+    <form id="addCarForm">
+        Customer :
+        <select id="customerSelect">
+            <option value="" disabled selected>Select a customer</option>
+        </select>
+        Make: <input type="text" id="carMake">
+        Model: <input type="text" id="carModel">
+        License Plate: <input type="text" id="carLicensePlate">
+        <button type="submit">Add Car</button>
+    </form>
+
+    <h2>Add Service</h2>
+    <form id="addServiceForm">
+        Service Title: <input type="text" id="serviceTitle">
+        Service Cost: <input type="number" id="serviceCost">
+        <button type="submit">Add Service</button>
+    </form>
+
+    <h2>Add Technician</h2>
+    <form id="addTechnicianForm">
+        First Name : <input type="text" id="technicianFirstName">
+        Last Name: <input type="text" id="technicianLastName">
+        <button type="submit">Add Technician</button>
+    </form>
+
     <script>
         function updateResponseBox(message) {
             document.getElementById("responseBox").innerText = message;
         }
 
-        function fetchMessages() {
-            fetch("/get_messages")
+        // Fetch customers from the server and populate the dropdown
+        function fetchCustomers() {
+            fetch('/get_customers')
                 .then(response => response.json())
                 .then(data => {
-                    let table = document.getElementById("messageTable");
-                    table.innerHTML = "<tr><th>ID</th><th>Message</th></tr>";
-                    data.forEach(msg => {
-                        table.innerHTML += `<tr><td>${msg[0]}</td><td>${msg[1]}</td></tr>`;
+                    let customerSelect = document.getElementById('customerSelect');
+                    data.forEach(customer => {
+                        let option = document.createElement('option');
+                        option.value = customer.id;  // Assuming customer.id is unique
+                        option.textContent = `${customer.first_name} ${customer.last_name}`;
+                        customerSelect.appendChild(option);
                     });
-                });
+                })
+                .catch(error => updateResponseBox(error));
         }
 
-        function processCommand(event) {
-            if (event.key === "Enter") {
-                let input = document.getElementById("commandInput").value.trim();
-                document.getElementById("commandInput").value = "";
+        document.getElementById('addCustomerForm').addEventListener('submit', function (event) {
+            event.preventDefault();  // Prevent the default form submission behavior
 
-                let addMatch = input.match(/^:a (.+)$/);
-                let updateMatch = input.match(/^:u (\d+) (.+)$/);
-                let deleteMatch = input.match(/^:d (.+)$/);
+            // Get values from the form inputs
+            let customerFirstName = document.getElementById('customerFirstName').value;
+            let customerLastName = document.getElementById('customerLastName').value;
+            let customerPhoneNumber = document.getElementById('customerPhoneNumber').value;
 
-                if (addMatch) {
-                    let messages = addMatch[1].split(',').map(msg => msg.trim());
-                    
-                    fetch("/submit", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ content: messages })
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            fetchMessages();
-                            updateResponseBox(data.message || data.error);
-                        });
-
-                } else if (updateMatch) {
-                    fetch(`/update_message/${updateMatch[1]}`, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ content: updateMatch[2] })
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            fetchMessages();
-                            updateResponseBox(data.message || data.error);
-                        });
-
-                } else if (deleteMatch) {
-                    let ids = deleteMatch[1].split(',').map(id => id.trim());
-                    fetch(`/delete_messages`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ ids: ids })
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            fetchMessages();
-                            updateResponseBox(data.message || data.error);
-                        });
-
-                } else {
-                    updateResponseBox("Invalid command");
-                }
+            // Check if any required fields are empty
+            if (!customerFirstName || !customerLastName || !customerPhoneNumber) {
+                updateResponseBox("Please fill in all fields.");
+                return; // Prevent sending the request if any field is missing
             }
-        }
-    </script>
-</head>
 
-<body onload="fetchMessages()">
-    <h1>Database GUI</h1>
-    <input type="text" id="commandInput" placeholder=":a {message} | :u {id} {new message} | :d {id}"
-        onkeypress="processCommand(event)">
-    <p id="responseBox"></p>
-    <table id="messageTable">
-        <tr>
-            <th>ID</th>
-            <th>Message</th>
-        </tr>
-    </table>
+            // Send the data to the backend via a POST request
+            fetch('/add_customer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customer_first_name: customerFirstName,
+                    customer_last_name: customerLastName,
+                    customer_phone_number: customerPhoneNumber
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Display the server's response message
+                    updateResponseBox(data.message || data.error);
+                    fetchCustomers();
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    updateResponseBox("An error occurred while adding the customer.");
+                });
+        });
+
+        document.getElementById('addCarForm').addEventListener('submit', function (event) {
+            event.preventDefault();  // Prevent the default form submission behavior
+
+            // Get values from the form inputs
+            let customerID = document.getElementById('customerSelect').value;
+            console.log(customerID);
+            let make = document.getElementById('carMake').value;
+            let model = document.getElementById('carModel').value;
+            let licensePlate = document.getElementById('carLicensePlate').value;
+
+            // Check if any required fields are empty
+            if (!customer || !make || !model || !licensePlate) {
+                updateResponseBox("Please fill in all fields.");
+                return; // Prevent sending the request if any field is missing
+            }
+
+            // Send the data to the backend via a POST request
+            fetch('/add_car', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    car_make: make,
+                    car_model: model,
+                    car_license_plate: licensePlate,
+                    customer_id : customerID
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Display the server's response message
+                    updateResponseBox(data.message || data.error);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    updateResponseBox("An error occurred while adding the car.");
+                });
+        });
+
+        document.getElementById('addServiceForm').addEventListener('submit', function (event) {
+            event.preventDefault();  // Prevent the default form submission behavior
+
+            let serviceTitle = document.getElementById('serviceTitle').value;
+            let serviceCost = document.getElementById('serviceCost').value;
+
+            // Check if any required fields are empty
+            if (!serviceTitle || !serviceCost) {
+                updateResponseBox("Please fill in all fields.");
+                return; // Prevent sending the request if any field is missing
+            }
+
+            // Send the data to the backend via a POST request
+            fetch('/add_service', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    service_title: serviceTitle,
+                    service_cost: serviceCost 
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Display the server's response message
+                    updateResponseBox(data.message || data.error);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    updateResponseBox("An error occurred while adding the service.");
+                });
+        });
+
+
+        document.getElementById('addTechnicianForm').addEventListener('submit', function (event) {
+            event.preventDefault();  // Prevent the default form submission behavior
+
+            let technicianFirstName = document.getElementById('technicianFirstName').value;
+            let technicianLastName = document.getElementById('technicianLastName').value;
+
+            // Check if any required fields are empty
+            if (!technicianFirstName|| !technicianLastName) {
+                updateResponseBox("Please fill in all fields.");
+                return; // Prevent sending the request if any field is missing
+            }
+
+            // Send the data to the backend via a POST request
+            fetch('/add_technician', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    technician_first_name: technicianFirstName,
+                    technician_last_name: technicianLastName
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Display the server's response message
+                    updateResponseBox(data.message || data.error);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    updateResponseBox("An error occurred while adding the technician.");
+                });
+        });
+
+
+    </script>
 </body>
 
 </html>
