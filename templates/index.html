@@ -56,10 +56,10 @@
             width: 10%;
         }
     </style>
-    
+
 </head>
 
-<body onload="fetchCustomers()">
+<body onload="fetchAll()">
     <h1>Technician Page</h1>
     <p id="responseBox"></p>
     <h2>Add Customer</h2>
@@ -72,10 +72,6 @@
 
     <h2>Add Car</h2>
     <form id="addCarForm">
-        Customer :
-        <select id="customerSelect">
-            <option value="" disabled selected>Select a customer</option>
-        </select>
         Make: <input type="text" id="carMake">
         Model: <input type="text" id="carModel">
         License Plate: <input type="text" id="carLicensePlate">
@@ -96,12 +92,57 @@
         <button type="submit">Add Technician</button>
     </form>
 
+    <h2>Associate Customer with Car</h2>
+    <form id="associateCustomerCarForm">
+        Customer :
+        <select id="customerSelect">
+            <option value="" disabled selected>Select a customer</option>
+        </select>
+        Car :
+        <select id="carSelect">
+            <option value="" disabled selected>Select a car</option>
+        </select>
+        <button type="submit">Associate Customer with Car</button>
+    </form>
+
+    <h2>Associate Technician with Service</h2>
+    <form id="associateTechnicianServiceForm">
+        Technician :
+        <select id="technicianSelect">
+            <option value="" disabled selected>Select a technician</option>
+        </select>
+        Service :
+        <select id="serviceSelect">
+            <option value="" disabled selected>Select a service</option>
+        </select>
+        <button type="submit">Associate Technician with Car</button>
+    </form>
+
+    <h2>Schedule Appointment</h2>
+    <form id="scheduleAppointmentForm">
+        Date & Time: <input type="datetime-local" id="appointmentDatetime" required><br><br>
+
+        Customer:
+        <select id="appointmentCustomerSelect" required>
+            <option value="" disabled selected>Select a customer</option>
+        </select><br><br>
+
+        Car:
+        <select id="appointmentCarSelect" required>
+            <option value="" disabled selected>Select a car</option>
+        </select><br><br>
+
+        Services & Technicians:
+        <div id="servicesTechniciansContainer"></div>
+
+        <button type="submit">Schedule Appointment</button>
+    </form>
+
     <script>
         function updateResponseBox(message) {
             document.getElementById("responseBox").innerText = message;
         }
 
-        // Fetch customers from the server and populate the dropdown
         function fetchCustomers() {
             fetch('/get_customers')
                 .then(response => response.json())
@@ -115,6 +156,161 @@
                     });
                 })
                 .catch(error => updateResponseBox(error));
+        }
+
+        function fetchCars() {
+            fetch('/get_cars')
+                .then(response => response.json())
+                .then(data => {
+                    let carSelect = document.getElementById('carSelect');
+                    data.forEach(car => {
+                        let option = document.createElement('option');
+                        option.value = car.id;  // Assuming car.id is unique
+                        option.textContent = `${car.make} ${car.model}`;
+                        carSelect.appendChild(option);
+                    });
+                })
+                .catch(error => updateResponseBox(error));
+        }
+
+        function fetchTechnicians() {
+            fetch('/get_technicians')
+                .then(response => response.json())
+                .then(data => {
+                    let technicianSelect = document.getElementById('technicianSelect');
+                    data.forEach(technician => {
+                        let option = document.createElement('option');
+                        option.value = technician.id;
+                        option.textContent = `${technician.first_name} ${technician.last_name}`;
+                        technicianSelect.appendChild(option);
+                    });
+                })
+                .catch(error => updateResponseBox(error));
+        }
+
+        function fetchServices() {
+            fetch('/get_services')
+                .then(response => response.json())
+                .then(data => {
+                    let serviceSelect = document.getElementById('serviceSelect');
+                    data.forEach(service => {
+                        let option = document.createElement('option');
+                        option.value = service.id;
+                        option.textContent = `${service.title}`;
+                        serviceSelect.appendChild(option);
+                    });
+                })
+                .catch(error => updateResponseBox(error));
+        }
+
+
+        function fetchAppointmentCustomers() {
+            fetch('/get_customers')
+                .then(response => response.json())
+                .then(data => {
+                    let select = document.getElementById('appointmentCustomerSelect');
+                    data.forEach(customer => {
+                        let option = document.createElement('option');
+                        option.value = customer.id;
+                        option.textContent = `${customer.first_name} ${customer.last_name}`;
+                        select.appendChild(option);
+                    });
+                });
+        }
+
+        function fetchCarsForCustomer(customerId) {
+            fetch('/get_cars')
+                .then(response => response.json())
+                .then(data => {
+                    let select = document.getElementById('appointmentCarSelect');
+                    select.innerHTML = '<option value="" disabled selected>Select a car</option>';
+                    data.forEach(car => {
+                        // only add cars associated with this customer
+                        fetch(`/get_customer_cars?customer_id=${customerId}`)
+                            .then(response => response.json())
+                            .then(customerCars => {
+                                customerCars.forEach(cc => {
+                                    if (cc.car_id === car.id) {
+                                        let option = document.createElement('option');
+                                        option.value = car.id;
+                                        option.textContent = `${car.make} ${car.model} (${car.license_plate})`;
+                                        select.appendChild(option);
+                                    }
+                                });
+                            });
+                    });
+                });
+        }
+
+        function fetchServicesAndTechnicians() {
+            Promise.all([
+                fetch('/get_services').then(res => res.json()),
+                fetch('/get_technicians').then(res => res.json())
+            ]).then(([services, technicians]) => {
+                let container = document.getElementById('servicesTechniciansContainer');
+                services.forEach(service => {
+                    let div = document.createElement('div');
+                    div.innerHTML = `
+                <input type="checkbox" class="serviceCheckbox" value="${service.id}"> ${service.title}
+                <select class="technicianSelect">
+                    <option value="" disabled selected>Select technician</option>
+                    ${technicians.map(tech => `<option value="${tech.id}">${tech.first_name} ${tech.last_name}</option>`).join('')}
+                </select>
+                <br>
+            `;
+                    container.appendChild(div);
+                });
+            });
+        }
+
+        // on customer select — update their cars
+        document.getElementById('appointmentCustomerSelect').addEventListener('change', (e) => {
+            fetchCarsForCustomer(e.target.value);
+        });
+
+        // schedule form submit
+        document.getElementById('scheduleAppointmentForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            let appointmentDatetime = document.getElementById('appointmentDatetime').value;
+            let customerId = document.getElementById('appointmentCustomerSelect').value;
+            let carId = document.getElementById('appointmentCarSelect').value;
+
+            let services = Array.from(document.getElementsByClassName('serviceCheckbox'))
+                .filter(cb => cb.checked)
+                .map(cb => {
+                    let technicianId = cb.nextElementSibling.value;
+                    return {
+                        service_id: cb.value,
+                        technician_id: technicianId
+                    };
+                });
+
+            fetch('/schedule_appointment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    appointment_datetime: appointmentDatetime,
+                    customer_id: customerId,
+                    car_id: carId,
+                    services: services
+                })
+            })
+                .then(res => res.json())
+                .then(data => updateResponseBox(data.message))
+                .catch(err => updateResponseBox(err));
+        });
+
+        fetchAppointmentCustomers();
+        fetchServicesAndTechnicians();
+
+
+        // populate dropdowns
+        function fetchAll() {
+            fetchCustomers();
+            fetchCars();
+            fetchTechnicians();
+            fetchServices();
         }
 
         document.getElementById('addCustomerForm').addEventListener('submit', function (event) {
@@ -136,9 +332,9 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    customer_first_name: customerFirstName,
-                    customer_last_name: customerLastName,
-                    customer_phone_number: customerPhoneNumber
+                    first_name: customerFirstName,
+                    last_name: customerLastName,
+                    phone_number: customerPhoneNumber
                 })
             })
                 .then(response => response.json())
@@ -157,14 +353,12 @@
             event.preventDefault();  // Prevent the default form submission behavior
 
             // Get values from the form inputs
-            let customerID = document.getElementById('customerSelect').value;
-            console.log(customerID);
             let make = document.getElementById('carMake').value;
             let model = document.getElementById('carModel').value;
             let licensePlate = document.getElementById('carLicensePlate').value;
 
             // Check if any required fields are empty
-            if (!customer || !make || !model || !licensePlate) {
+            if (!make || !model || !licensePlate) {
                 updateResponseBox("Please fill in all fields.");
                 return; // Prevent sending the request if any field is missing
             }
@@ -174,10 +368,9 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    car_make: make,
-                    car_model: model,
-                    car_license_plate: licensePlate,
-                    customer_id : customerID
+                    make: make,
+                    model: model,
+                    license_plate: licensePlate,
                 })
             })
                 .then(response => response.json())
@@ -208,8 +401,8 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    service_title: serviceTitle,
-                    service_cost: serviceCost 
+                    title: serviceTitle,
+                    cost: serviceCost
                 })
             })
                 .then(response => response.json())
@@ -231,7 +424,7 @@
             let technicianLastName = document.getElementById('technicianLastName').value;
 
             // Check if any required fields are empty
-            if (!technicianFirstName|| !technicianLastName) {
+            if (!technicianFirstName || !technicianLastName) {
                 updateResponseBox("Please fill in all fields.");
                 return; // Prevent sending the request if any field is missing
             }
@@ -241,8 +434,8 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    technician_first_name: technicianFirstName,
-                    technician_last_name: technicianLastName
+                    first_name: technicianFirstName,
+                    last_name: technicianLastName
                 })
             })
                 .then(response => response.json())
@@ -255,6 +448,67 @@
                     updateResponseBox("An error occurred while adding the technician.");
                 });
         });
+
+
+        document.getElementById('associateCustomerCarForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            let customerId = document.getElementById('customerSelect').value;
+            let carId = document.getElementById('carSelect').value;
+
+            if (!customerId || !carId) {
+                updateResponseBox("Please enter both Customer ID and Car ID.");
+                return;
+            }
+
+            fetch('/associate_customer_car', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customer_id: customerId,
+                    car_id: carId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    updateResponseBox(data.message || data.error);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    updateResponseBox("An error occurred while associating the car with the customer.");
+                });
+        });
+
+
+        document.getElementById('associateTechnicianServiceForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            let technicianId = document.getElementById('technicianSelect').value;
+            let serviceId = document.getElementById('serviceSelect').value;
+
+            if (!technicianId || !serviceId) {
+                updateResponseBox("Please enter both Technician and Service.");
+                return;
+            }
+
+            fetch('/associate_technician_service', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    technician_id: technicianId,
+                    service_id: serviceId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    updateResponseBox(data.message || data.error);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    updateResponseBox("An error occurred while associating the technician with the service.");
+                });
+        });
+
 
 
     </script>
