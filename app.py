@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import sqlite3
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -99,6 +100,13 @@ def create_tables():
     conn.close()
 
 create_tables()
+
+def query_db(query, args=(), one=False):
+    with sqlite3.connect(DB_FILE) as con:
+        cur = con.execute(query, args)
+        rv = cur.fetchall()
+
+    return (rv[0] if rv else None) if one else rv
 
 @app.route('/')
 def index():
@@ -302,6 +310,190 @@ def get_customer_cars():
     conn.close()
     return jsonify([{"car_id": car[0]} for car in cars])
 
+
+@app.route('/get_service_technicians', methods=['GET'])
+def get_service_technicians():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT s.id AS service_id, s.title AS service_title,
+               t.id AS technician_id, t.first_name, t.last_name
+        FROM technician_services ts
+        JOIN technicians t ON ts.technician_id = t.id
+        JOIN services s ON ts.service_id = s.id
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Organize data by service
+    service_map = {}
+    for service_id, service_title, tech_id, tech_first, tech_last in rows:
+        if service_id not in service_map:
+            service_map[service_id] = {
+                "title": service_title,
+                "technicians": []
+            }
+        service_map[service_id]["technicians"].append({
+            "id": tech_id,
+            "name": f"{tech_first} {tech_last}"
+        })
+
+    return jsonify(service_map)
+
+
+# VIEW #
+
+@app.route('/view')
+def view():
+    return render_template('view.html')
+
+@app.route('/api/jobs_by_day')
+def jobs_by_day():
+    date = request.args.get('date')
+    query = '''
+        SELECT a.appointment_datetime, 
+            cust.first_name || ' ' || cust.last_name AS customer_name,
+            tech.first_name || ' ' || tech.last_name AS technician_name,
+            s.title AS service_title, 
+            c.make, c.model, c.license_plate, s.cost
+        FROM appointment_services aps
+        JOIN appointments a ON aps.appointment_id = a.id
+        JOIN cars c ON a.car_id = c.id
+        JOIN customers cust ON a.customer_id = cust.id
+        JOIN services s ON aps.service_id = s.id
+        JOIN technicians tech ON aps.technician_id = tech.id
+        WHERE DATE(a.appointment_datetime) = ?
+        ORDER BY a.appointment_datetime, c.id
+    '''
+
+    result = query_db(query, [date])
+    return jsonify([{"appointment_datetime": r[0],
+                     "customer_name" : r[1],
+                     "technician_name" : r[2],
+                     "service_title" : r[3],
+                     "make" : r[4],
+                     "model" : r[5],
+                     "license_plate" : r[6],
+                     "cost" : r[7]}
+                    for r in result])
+
+@app.route('/api/service_count')
+def service_count():
+    service_id = request.args.get('service_id')
+    start = request.args.get('start')
+    end = request.args.get('end')
+    query = '''
+        SELECT DATE(a.appointment_datetime) AS day, COUNT(*) AS count
+        FROM appointment_services aps
+        JOIN appointments a ON aps.appointment_id = a.id
+        WHERE aps.service_id = ? AND DATE(a.appointment_datetime) BETWEEN ? AND ?
+        GROUP BY day
+        ORDER BY day
+    '''
+    return jsonify(query_db(query, [service_id, start, end]))
+
+@app.route('/api/total_cost')
+def total_cost():
+    start = request.args.get('start')
+    end = request.args.get('end')
+    query = '''
+        SELECT SUM(s.cost) AS total_cost
+        FROM appointment_services aps
+        JOIN appointments a ON aps.appointment_id = a.id
+        JOIN services s ON aps.service_id = s.id
+        WHERE DATE(a.appointment_datetime) BETWEEN ? AND ?
+    '''
+    return jsonify(query_db(query, [start, end], one=True))
+
+@app.route('/api/tech_jobs')
+def tech_jobs():
+    tech_id = request.args.get('tech_id')
+    start = request.args.get('start')
+    end = request.args.get('end')
+    query = '''
+        SELECT c.make, c.model, c.license_plate,
+               cust.first_name || ' ' || cust.last_name AS customer_name,
+               s.title AS service_title, a.appointment_datetime
+        FROM appointment_services aps
+        JOIN appointments a ON aps.appointment_id = a.id
+        JOIN cars c ON a.car_id = c.id
+        JOIN customers cust ON a.customer_id = cust.id
+        JOIN services s ON aps.service_id = s.id
+        WHERE aps.technician_id = ? AND DATE(a.appointment_datetime) BETWEEN ? AND ?
+        ORDER BY c.id, a.appointment_datetime
+    '''
+    return jsonify(query_db(query, [tech_id, start, end]))
+
+@app.route('/api/customer_services')
+def customer_services():
+    customer_id = request.args.get('customer_id')
+    query = '''
+        SELECT c.make, c.model, c.license_plate, a.appointment_datetime,
+               s.title AS service_title, s.cost,
+               tech.first_name || ' ' || tech.last_name AS technician_name
+        FROM cars c
+        JOIN appointments a ON c.id = a.car_id
+        JOIN appointment_services aps ON a.id = aps.appointment_id
+        JOIN services s ON aps.service_id = s.id
+        LEFT JOIN technicians tech ON aps.technician_id = tech.id
+        WHERE c.id IN (SELECT car_id FROM customer_cars WHERE customer_id = ?)
+        ORDER BY c.id, a.appointment_datetime
+    '''
+    return jsonify(query_db(query, [customer_id]))
+
+@app.route('/api/idle_techs')
+def idle_techs():
+    query = '''
+        SELECT first_name || ' ' || last_name AS name FROM technicians
+        WHERE id NOT IN (
+            SELECT DISTINCT technician_id FROM appointment_services
+            WHERE technician_id IS NOT NULL
+        )
+    '''
+    return jsonify(query_db(query))
+
+@app.route('/api/top_tech')
+def top_tech():
+    start = request.args.get('start')
+    end = request.args.get('end')
+    query = '''
+        SELECT tech.first_name || ' ' || tech.last_name AS name, SUM(s.cost) AS total
+        FROM appointment_services aps
+        JOIN appointments a ON aps.appointment_id = a.id
+        JOIN technicians tech ON aps.technician_id = tech.id
+        JOIN services s ON aps.service_id = s.id
+        WHERE DATE(a.appointment_datetime) BETWEEN ? AND ?
+        GROUP BY tech.id
+        ORDER BY total DESC
+        LIMIT 1
+    '''
+    result = query_db(query, [start, end], one=True)
+    return jsonify(dict(result) if result else {})
+
+@app.route('/api/service_percentages')
+def service_percentages():
+    start = request.args.get('start')
+    end = request.args.get('end')
+    total_query = '''
+        SELECT COUNT(*) AS total
+        FROM appointment_services aps
+        JOIN appointments a ON aps.appointment_id = a.id
+        WHERE DATE(a.appointment_datetime) BETWEEN ? AND ?
+    '''
+    total_result = query_db(total_query, [start, end], one=True)
+    total = total_result[0] if total_result else 1
+
+    query = '''
+        SELECT s.title AS name, COUNT(*) * 100.0 / ? AS percent
+        FROM appointment_services aps
+        JOIN appointments a ON aps.appointment_id = a.id
+        JOIN services s ON aps.service_id = s.id
+        WHERE DATE(a.appointment_datetime) BETWEEN ? AND ?
+        GROUP BY s.title
+        ORDER BY percent DESC
+    '''
+    return jsonify(query_db(query, [total, start, end]))
 
 
 if __name__ == '__main__':

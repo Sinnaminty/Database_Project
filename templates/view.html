@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mechanic Shop</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="p-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">Mechanic Shop Dashboard</h1>
+            <a href="/" class="btn btn-secondary">Go to Technician Page</a>
+        </div>
+
+        <div class="mb-4">
+            <h4>Jobs by Day</h4>
+            <input type="date" id="jobs-date" class="form-control w-auto d-inline-block">
+            <button class="btn btn-primary" onclick="fetchJobsByDay()">Fetch</button>
+            <div id="jobs-output"></div>
+        </div>
+
+        <div class="mb-4">
+            <h4>Service Count</h4>
+            <input type="text" id="service-id" placeholder="Service ID" class="form-control w-auto d-inline-block">
+            <input type="date" id="service-start" class="form-control w-auto d-inline-block">
+            <input type="date" id="service-end" class="form-control w-auto d-inline-block">
+            <button class="btn btn-primary" onclick="fetchServiceCount()">Fetch</button>
+            <div id="service-count-output"></div>
+        </div>
+
+        <div class="mb-4">
+            <h4>Total Cost</h4>
+            <input type="date" id="cost-start" class="form-control w-auto d-inline-block">
+            <input type="date" id="cost-end" class="form-control w-auto d-inline-block">
+            <button class="btn btn-primary" onclick="fetchTotalCost()">Calculate</button>
+            <div id="total-cost-output"></div>
+        </div>
+
+        <div class="mb-4">
+            <h4>Technician Jobs</h4>
+            <input type="text" id="tech-id" placeholder="Technician ID" class="form-control w-auto d-inline-block">
+            <input type="date" id="tech-start" class="form-control w-auto d-inline-block">
+            <input type="date" id="tech-end" class="form-control w-auto d-inline-block">
+            <button class="btn btn-primary" onclick="fetchTechJobs()">Fetch</button>
+            <div id="tech-jobs-output"></div>
+        </div>
+
+        <div class="mb-4">
+            <h4>Customer Services</h4>
+            <input type="text" id="cust-id" placeholder="Customer ID" class="form-control w-auto d-inline-block">
+            <button class="btn btn-primary" onclick="fetchCustomerServices()">Fetch</button>
+            <div id="cust-services-output"></div>
+        </div>
+
+        <div class="mb-4">
+            <h4>Idle Technicians</h4>
+            <button class="btn btn-secondary" onclick="fetchIdleTechs()">List</button>
+            <div id="idle-techs-output"></div>
+        </div>
+
+        <div class="mb-4">
+            <h4>Top Technician</h4>
+            <input type="date" id="top-start" class="form-control w-auto d-inline-block">
+            <input type="date" id="top-end" class="form-control w-auto d-inline-block">
+            <button class="btn btn-success" onclick="fetchTopTech()">Find</button>
+            <div id="top-tech-output"></div>
+        </div>
+
+        <div class="mb-4">
+            <h4>Service Percentages</h4>
+            <input type="date" id="percent-start" class="form-control w-auto d-inline-block">
+            <input type="date" id="percent-end" class="form-control w-auto d-inline-block">
+            <button class="btn btn-info" onclick="fetchServicePercentages()">Graph</button>
+            <canvas id="percentChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <script src="/static/view.js"></script>
+
+</body>
+
+</html>

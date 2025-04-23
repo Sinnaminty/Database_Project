@@ -2,516 +2,108 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Database GUI</title>
-    <style>
-        body {
-            font-family: monospace;
-            background-color: #282c34;
-            color: #abb2bf;
-            text-align: center;
-            padding: 20px;
-        }
-
-        #commandInput,
-        #responseBox,
-        table {
-            width: 80%;
-            margin: 10px auto;
-        }
-
-        #commandInput {
-            padding: 10px;
-            font-size: 16px;
-            background-color: #1e2228;
-            border: 1px solid #5c6370;
-            color: white;
-            outline: none;
-        }
-
-        #responseBox {
-            padding: 10px;
-            border: 1px solid #5c6370;
-            background-color: #1e2228;
-            min-height: 20px;
-        }
-
-        table {
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            padding: 10px;
-            border: 1px solid #5c6370;
-        }
-
-        th {
-            background-color: #3e4451;
-        }
-
-        td:first-child,
-        th:first-child {
-            width: 10%;
-        }
-    </style>
-
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mechanic Shop Technician Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
 </head>
 
-<body onload="fetchAll()">
-    <h1>Technician Page</h1>
-    <p id="responseBox"></p>
-    <h2>Add Customer</h2>
-    <form id="addCustomerForm">
-        First Name: <input type="text" id="customerFirstName">
-        Last Name: <input type="text" id="customerLastName">
-        Phone Number: <input type="text" id="customerPhoneNumber">
-        <button type="submit">Add Customer</button>
-    </form>
+<body onload="fetchAll()" class="p-3">
+    <div class="container">
+        <div id="responseBox" class="alert alert-info mb-4"></div>
 
-    <h2>Add Car</h2>
-    <form id="addCarForm">
-        Make: <input type="text" id="carMake">
-        Model: <input type="text" id="carModel">
-        License Plate: <input type="text" id="carLicensePlate">
-        <button type="submit">Add Car</button>
-    </form>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h3 mb-0">Technician Dashboard</h1>
+            <a href="/view" class="btn btn-secondary btn-sm">Go to Dashboard</a>
+        </div>
 
-    <h2>Add Service</h2>
-    <form id="addServiceForm">
-        Service Title: <input type="text" id="serviceTitle">
-        Service Cost: <input type="number" id="serviceCost">
-        <button type="submit">Add Service</button>
-    </form>
+        <div class="row g-2">
+            <div class="col-md-2">
+                <h5>Add Customer</h5>
+                <form id="addCustomerForm">
+                    <input type="text" class="form-control mb-2" id="customerFirstName" placeholder="First Name"
+                        required>
+                    <input type="text" class="form-control mb-2" id="customerLastName" placeholder="Last Name" required>
+                    <input type="text" class="form-control mb-2" id="customerPhoneNumber" placeholder="Phone Number"
+                        required>
+                    <button type="submit" class="btn btn-primary btn-sm">Add</button>
+                </form>
+            </div>
 
-    <h2>Add Technician</h2>
-    <form id="addTechnicianForm">
-        First Name : <input type="text" id="technicianFirstName">
-        Last Name: <input type="text" id="technicianLastName">
-        <button type="submit">Add Technician</button>
-    </form>
+            <div class="col-md-2">
+                <h5>Add Car</h5>
+                <form id="addCarForm">
+                    <input type="text" class="form-control mb-2" id="carMake" placeholder="Make" required>
+                    <input type="text" class="form-control mb-2" id="carModel" placeholder="Model" required>
+                    <input type="text" class="form-control mb-2" id="carLicensePlate" placeholder="License Plate"
+                        required>
+                    <button type="submit" class="btn btn-primary btn-sm">Add</button>
+                </form>
+            </div>
 
-    <h2>Associate Customer with Car</h2>
-    <form id="associateCustomerCarForm">
-        Customer :
-        <select id="customerSelect">
-            <option value="" disabled selected>Select a customer</option>
-        </select>
-        Car :
-        <select id="carSelect">
-            <option value="" disabled selected>Select a car</option>
-        </select>
-        <button type="submit">Associate Customer with Car</button>
-    </form>
+            <div class="col-md-2">
+                <h5>Add Service</h5>
+                <form id="addServiceForm">
+                    <input type="text" class="form-control mb-2" id="serviceTitle" placeholder="Service Title" required>
+                    <input type="number" class="form-control mb-2" id="serviceCost" placeholder="Cost" required>
+                    <button type="submit" class="btn btn-primary btn-sm">Add</button>
+                </form>
+            </div>
 
-    <h2>Associate Technician with Service</h2>
-    <form id="associateTechnicianServiceForm">
-        Technician :
-        <select id="technicianSelect">
-            <option value="" disabled selected>Select a technician</option>
-        </select>
-        Service :
-        <select id="serviceSelect">
-            <option value="" disabled selected>Select a service</option>
-        </select>
-        <button type="submit">Associate Technician with Car</button>
-    </form>
+            <div class="col-md-2">
+                <h5>Add Technician</h5>
+                <form id="addTechnicianForm">
+                    <input type="text" class="form-control mb-2" id="technicianFirstName" placeholder="First Name"
+                        required>
+                    <input type="text" class="form-control mb-2" id="technicianLastName" placeholder="Last Name"
+                        required>
+                    <button type="submit" class="btn btn-primary btn-sm">Add</button>
+                </form>
+            </div>
 
-    <h2>Schedule Appointment</h2>
-    <form id="scheduleAppointmentForm">
-        Date & Time: <input type="datetime-local" id="appointmentDatetime" required><br><br>
+            <div class="col-md-2">
+                <h5>Associate Customer with Car</h5>
+                <form id="associateCustomerCarForm">
+                    <select id="customerSelect" class="form-select mb-2" required>
+                        <option value="" disabled selected>Select Customer</option>
+                    </select>
+                    <select id="carSelect" class="form-select mb-2" required>
+                        <option value="" disabled selected>Select Car</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Associate</button>
+                </form>
+            </div>
 
-        Customer:
-        <select id="appointmentCustomerSelect" required>
-            <option value="" disabled selected>Select a customer</option>
-        </select><br><br>
+            <div class="col-md-2">
+                <h5>Associate Technician with Service</h5>
+                <form id="associateTechnicianServiceForm">
+                    <select id="technicianSelect" class="form-select mb-2" required>
+                        <option value="" disabled selected>Select Technician</option>
+                    </select>
+                    <select id="serviceSelect" class="form-select mb-2" required>
+                        <option value="" disabled selected>Select Service</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Associate</button>
+                </form>
+            </div>
 
-        Car:
-        <select id="appointmentCarSelect" required>
-            <option value="" disabled selected>Select a car</option>
-        </select><br><br>
-
-        Services & Technicians:
-        <div id="servicesTechniciansContainer"></div>
-
-        <button type="submit">Schedule Appointment</button>
-    </form>
-
-    <script>
-        function updateResponseBox(message) {
-            document.getElementById("responseBox").innerText = message;
-        }
-
-        function fetchCustomers() {
-            fetch('/get_customers')
-                .then(response => response.json())
-                .then(data => {
-                    let customerSelect = document.getElementById('customerSelect');
-                    data.forEach(customer => {
-                        let option = document.createElement('option');
-                        option.value = customer.id;  // Assuming customer.id is unique
-                        option.textContent = `${customer.first_name} ${customer.last_name}`;
-                        customerSelect.appendChild(option);
-                    });
-                })
-                .catch(error => updateResponseBox(error));
-        }
-
-        function fetchCars() {
-            fetch('/get_cars')
-                .then(response => response.json())
-                .then(data => {
-                    let carSelect = document.getElementById('carSelect');
-                    data.forEach(car => {
-                        let option = document.createElement('option');
-                        option.value = car.id;  // Assuming car.id is unique
-                        option.textContent = `${car.make} ${car.model}`;
-                        carSelect.appendChild(option);
-                    });
-                })
-                .catch(error => updateResponseBox(error));
-        }
-
-        function fetchTechnicians() {
-            fetch('/get_technicians')
-                .then(response => response.json())
-                .then(data => {
-                    let technicianSelect = document.getElementById('technicianSelect');
-                    data.forEach(technician => {
-                        let option = document.createElement('option');
-                        option.value = technician.id;
-                        option.textContent = `${technician.first_name} ${technician.last_name}`;
-                        technicianSelect.appendChild(option);
-                    });
-                })
-                .catch(error => updateResponseBox(error));
-        }
-
-        function fetchServices() {
-            fetch('/get_services')
-                .then(response => response.json())
-                .then(data => {
-                    let serviceSelect = document.getElementById('serviceSelect');
-                    data.forEach(service => {
-                        let option = document.createElement('option');
-                        option.value = service.id;
-                        option.textContent = `${service.title}`;
-                        serviceSelect.appendChild(option);
-                    });
-                })
-                .catch(error => updateResponseBox(error));
-        }
-
-
-        function fetchAppointmentCustomers() {
-            fetch('/get_customers')
-                .then(response => response.json())
-                .then(data => {
-                    let select = document.getElementById('appointmentCustomerSelect');
-                    data.forEach(customer => {
-                        let option = document.createElement('option');
-                        option.value = customer.id;
-                        option.textContent = `${customer.first_name} ${customer.last_name}`;
-                        select.appendChild(option);
-                    });
-                });
-        }
-
-        function fetchCarsForCustomer(customerId) {
-            fetch('/get_cars')
-                .then(response => response.json())
-                .then(data => {
-                    let select = document.getElementById('appointmentCarSelect');
-                    select.innerHTML = '<option value="" disabled selected>Select a car</option>';
-                    data.forEach(car => {
-                        // only add cars associated with this customer
-                        fetch(`/get_customer_cars?customer_id=${customerId}`)
-                            .then(response => response.json())
-                            .then(customerCars => {
-                                customerCars.forEach(cc => {
-                                    if (cc.car_id === car.id) {
-                                        let option = document.createElement('option');
-                                        option.value = car.id;
-                                        option.textContent = `${car.make} ${car.model} (${car.license_plate})`;
-                                        select.appendChild(option);
-                                    }
-                                });
-                            });
-                    });
-                });
-        }
-
-        function fetchServicesAndTechnicians() {
-            Promise.all([
-                fetch('/get_services').then(res => res.json()),
-                fetch('/get_technicians').then(res => res.json())
-            ]).then(([services, technicians]) => {
-                let container = document.getElementById('servicesTechniciansContainer');
-                services.forEach(service => {
-                    let div = document.createElement('div');
-                    div.innerHTML = `
-                <input type="checkbox" class="serviceCheckbox" value="${service.id}"> ${service.title}
-                <select class="technicianSelect">
-                    <option value="" disabled selected>Select technician</option>
-                    ${technicians.map(tech => `<option value="${tech.id}">${tech.first_name} ${tech.last_name}</option>`).join('')}
-                </select>
-                <br>
-            `;
-                    container.appendChild(div);
-                });
-            });
-        }
-
-        // on customer select — update their cars
-        document.getElementById('appointmentCustomerSelect').addEventListener('change', (e) => {
-            fetchCarsForCustomer(e.target.value);
-        });
-
-        // schedule form submit
-        document.getElementById('scheduleAppointmentForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            let appointmentDatetime = document.getElementById('appointmentDatetime').value;
-            let customerId = document.getElementById('appointmentCustomerSelect').value;
-            let carId = document.getElementById('appointmentCarSelect').value;
-
-            let services = Array.from(document.getElementsByClassName('serviceCheckbox'))
-                .filter(cb => cb.checked)
-                .map(cb => {
-                    let technicianId = cb.nextElementSibling.value;
-                    return {
-                        service_id: cb.value,
-                        technician_id: technicianId
-                    };
-                });
-
-            fetch('/schedule_appointment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    appointment_datetime: appointmentDatetime,
-                    customer_id: customerId,
-                    car_id: carId,
-                    services: services
-                })
-            })
-                .then(res => res.json())
-                .then(data => updateResponseBox(data.message))
-                .catch(err => updateResponseBox(err));
-        });
-
-        fetchAppointmentCustomers();
-        fetchServicesAndTechnicians();
-
-
-        // populate dropdowns
-        function fetchAll() {
-            fetchCustomers();
-            fetchCars();
-            fetchTechnicians();
-            fetchServices();
-        }
-
-        document.getElementById('addCustomerForm').addEventListener('submit', function (event) {
-            event.preventDefault();  // Prevent the default form submission behavior
-
-            // Get values from the form inputs
-            let customerFirstName = document.getElementById('customerFirstName').value;
-            let customerLastName = document.getElementById('customerLastName').value;
-            let customerPhoneNumber = document.getElementById('customerPhoneNumber').value;
-
-            // Check if any required fields are empty
-            if (!customerFirstName || !customerLastName || !customerPhoneNumber) {
-                updateResponseBox("Please fill in all fields.");
-                return; // Prevent sending the request if any field is missing
-            }
-
-            // Send the data to the backend via a POST request
-            fetch('/add_customer', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    first_name: customerFirstName,
-                    last_name: customerLastName,
-                    phone_number: customerPhoneNumber
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    // Display the server's response message
-                    updateResponseBox(data.message || data.error);
-                    fetchCustomers();
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    updateResponseBox("An error occurred while adding the customer.");
-                });
-        });
-
-        document.getElementById('addCarForm').addEventListener('submit', function (event) {
-            event.preventDefault();  // Prevent the default form submission behavior
-
-            // Get values from the form inputs
-            let make = document.getElementById('carMake').value;
-            let model = document.getElementById('carModel').value;
-            let licensePlate = document.getElementById('carLicensePlate').value;
-
-            // Check if any required fields are empty
-            if (!make || !model || !licensePlate) {
-                updateResponseBox("Please fill in all fields.");
-                return; // Prevent sending the request if any field is missing
-            }
-
-            // Send the data to the backend via a POST request
-            fetch('/add_car', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    make: make,
-                    model: model,
-                    license_plate: licensePlate,
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    // Display the server's response message
-                    updateResponseBox(data.message || data.error);
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    updateResponseBox("An error occurred while adding the car.");
-                });
-        });
-
-        document.getElementById('addServiceForm').addEventListener('submit', function (event) {
-            event.preventDefault();  // Prevent the default form submission behavior
-
-            let serviceTitle = document.getElementById('serviceTitle').value;
-            let serviceCost = document.getElementById('serviceCost').value;
-
-            // Check if any required fields are empty
-            if (!serviceTitle || !serviceCost) {
-                updateResponseBox("Please fill in all fields.");
-                return; // Prevent sending the request if any field is missing
-            }
-
-            // Send the data to the backend via a POST request
-            fetch('/add_service', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title: serviceTitle,
-                    cost: serviceCost
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    // Display the server's response message
-                    updateResponseBox(data.message || data.error);
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    updateResponseBox("An error occurred while adding the service.");
-                });
-        });
-
-
-        document.getElementById('addTechnicianForm').addEventListener('submit', function (event) {
-            event.preventDefault();  // Prevent the default form submission behavior
-
-            let technicianFirstName = document.getElementById('technicianFirstName').value;
-            let technicianLastName = document.getElementById('technicianLastName').value;
-
-            // Check if any required fields are empty
-            if (!technicianFirstName || !technicianLastName) {
-                updateResponseBox("Please fill in all fields.");
-                return; // Prevent sending the request if any field is missing
-            }
-
-            // Send the data to the backend via a POST request
-            fetch('/add_technician', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    first_name: technicianFirstName,
-                    last_name: technicianLastName
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    // Display the server's response message
-                    updateResponseBox(data.message || data.error);
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    updateResponseBox("An error occurred while adding the technician.");
-                });
-        });
-
-
-        document.getElementById('associateCustomerCarForm').addEventListener('submit', function (event) {
-            event.preventDefault();
-
-            let customerId = document.getElementById('customerSelect').value;
-            let carId = document.getElementById('carSelect').value;
-
-            if (!customerId || !carId) {
-                updateResponseBox("Please enter both Customer ID and Car ID.");
-                return;
-            }
-
-            fetch('/associate_customer_car', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    customer_id: customerId,
-                    car_id: carId
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    updateResponseBox(data.message || data.error);
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    updateResponseBox("An error occurred while associating the car with the customer.");
-                });
-        });
-
-
-        document.getElementById('associateTechnicianServiceForm').addEventListener('submit', function (event) {
-            event.preventDefault();
-
-            let technicianId = document.getElementById('technicianSelect').value;
-            let serviceId = document.getElementById('serviceSelect').value;
-
-            if (!technicianId || !serviceId) {
-                updateResponseBox("Please enter both Technician and Service.");
-                return;
-            }
-
-            fetch('/associate_technician_service', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    technician_id: technicianId,
-                    service_id: serviceId
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    updateResponseBox(data.message || data.error);
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    updateResponseBox("An error occurred while associating the technician with the service.");
-                });
-        });
-
-
-
-    </script>
+            <div class="col-12">
+                <h5>Schedule Appointment</h5>
+                <form id="scheduleAppointmentForm">
+                    <input type="datetime-local" class="form-control mb-2" id="appointmentDatetime" required>
+                    <select id="appointmentCustomerSelect" class="form-select mb-2" required>
+                        <option value="" disabled selected>Select Customer</option>
+                    </select>
+                    <select id="appointmentCarSelect" class="form-select mb-2" required>
+                        <option value="" disabled selected>Select Car</option>
+                    </select>
+                    <div id="servicesTechniciansContainer" class="mb-2"></div>
+                    <button type="submit" class="btn btn-success btn-sm">Schedule</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="/static/index.js"></script>
 </body>
 
 </html>

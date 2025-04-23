@@ -1,0 +1,49 @@
+body {
+    font-family: monospace;
+    background-color: #282c34;
+    color: #abb2bf;
+    text-align: center;
+    padding: 20px;
+}
+
+#commandInput,
+#responseBox,
+table {
+    width: 80%;
+    margin: 10px auto;
+}
+
+#commandInput {
+    padding: 10px;
+    font-size: 16px;
+    background-color: #1e2228;
+    border: 1px solid #5c6370;
+    color: white;
+    outline: none;
+}
+
+#responseBox {
+    padding: 10px;
+    border: 1px solid #5c6370;
+    background-color: #1e2228;
+    min-height: 20px;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 10px;
+    border: 1px solid #5c6370;
+}
+
+th {
+    background-color: #3e4451;
+}
+
+td:first-child,
+th:first-child {
+    width: 10%;
+}
