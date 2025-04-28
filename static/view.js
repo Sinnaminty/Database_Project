@@ -4,6 +4,25 @@ function formatDate(isoString) {
     return new Date(isoString).toLocaleString(undefined, options);
 }
 
+
+
+function fetchServices() {
+    fetch('/get_services')
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById('serviceSelect');
+            if (select) {
+                select.innerHTML = '<option value="" disabled selected>Select a service</option>';
+                data.forEach(service => {
+                    const opt = document.createElement('option');
+                    opt.value = service.id;
+                    opt.textContent = `${service.title}`;
+                    select.appendChild(opt);
+                });
+            }
+        });
+}
+
 function createTable(data) {
     if (!data.length) return '<em>No results</em>';
 
@@ -59,7 +78,7 @@ async function fetchJobsByDay() {
 }
 
 async function fetchServiceCount() {
-    const id = document.getElementById('service-id').value;
+    const id = document.getElementById('serviceSelect').value;
     const start = document.getElementById('service-start').value;
     const end = document.getElementById('service-end').value;
     const res = await fetch(`/api/service_count?service_id=${id}&start=${start}&end=${end}`);

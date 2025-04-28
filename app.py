@@ -391,7 +391,9 @@ def service_count():
         GROUP BY day
         ORDER BY day
     '''
-    return jsonify(query_db(query, [service_id, start, end]))
+    result = query_db(query, [service_id, start, end])
+    return jsonify([{"appointment_datetime" : r[0]}
+                    for r in result])
 
 @app.route('/api/total_cost')
 def total_cost():

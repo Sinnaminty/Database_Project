@@ -22,6 +22,40 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
+    function fetchTechnicians() {
+        fetch('/get_technicians')
+            .then(res => res.json())
+            .then(data => {
+                const select = document.getElementById('technicianSelect');
+                if (select) {
+                    select.innerHTML = '<option value="" disabled selected>Select a technician</option>';
+                    data.forEach(tech => {
+                        const opt = document.createElement('option');
+                        opt.value = tech.id;
+                        opt.textContent = `${tech.first_name} ${tech.last_name}`;
+                        select.appendChild(opt);
+                    });
+                }
+            });
+    }
+
+    function fetchServices() {
+        fetch('/get_services')
+            .then(res => res.json())
+            .then(data => {
+                const select = document.getElementById('serviceSelect');
+                if (select) {
+                    select.innerHTML = '<option value="" disabled selected>Select a service</option>';
+                    data.forEach(service => {
+                        const opt = document.createElement('option');
+                        opt.value = service.id;
+                        opt.textContent = `${service.title}`;
+                        select.appendChild(opt);
+                    });
+                }
+            });
+    }
+
     function fetchCars() {
         fetch('/get_cars')
             .then(res => res.json())
@@ -82,6 +116,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function fetchAll() {
         fetchCustomers();
         fetchCars();
+        fetchServices();
+        fetchTechnicians();
         fetchServiceAndTechniciansAssociations();
     }
 
