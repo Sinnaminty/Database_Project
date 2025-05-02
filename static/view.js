@@ -4,8 +4,6 @@ function formatDate(isoString) {
     return new Date(isoString).toLocaleString(undefined, options);
 }
 
-
-
 function fetchServices() {
     fetch('/get_services')
         .then(res => res.json())
@@ -23,19 +21,10 @@ function fetchServices() {
         });
 }
 
-function createTable(data) {
+function createTable(headers, data) {
     if (!data.length) return '<em>No results</em>';
-
-    const headers = [
-        "appointment_datetime",
-        "customer_name",
-        "technician_name",
-        "service_title",
-        "make",
-        "model",
-        "license_plate",
-        "cost"
-    ];
+    console.log(headers);
+    console.log(data);
 
     let table = '<table class="table table-bordered table-striped"><thead><tr>';
     headers.forEach(h => {
@@ -71,19 +60,39 @@ function createTable(data) {
 
 
 async function fetchJobsByDay() {
+    const headers = [
+        "appointment_datetime",
+        "customer_name",
+        "technician_name",
+        "service_title",
+        "make",
+        "model",
+        "license_plate",
+        "cost"
+    ];
     const date = document.getElementById('jobs-date').value;
     const res = await fetch(`/api/jobs_by_day?date=${date}`);
     const data = await res.json();
-    document.getElementById('jobs-output').innerHTML = createTable(data);
+    document.getElementById('jobs-output').innerHTML = createTable(headers, data);
 }
 
 async function fetchServiceCount() {
+    const headers = [
+        "appointment_datetime",
+        "customer_name",
+        "technician_name",
+        "service_title",
+        "make",
+        "model",
+        "license_plate",
+        "cost"
+    ];
     const id = document.getElementById('serviceSelect').value;
     const start = document.getElementById('service-start').value;
     const end = document.getElementById('service-end').value;
     const res = await fetch(`/api/service_count?service_id=${id}&start=${start}&end=${end}`);
     const data = await res.json();
-    document.getElementById('service-count-output').innerHTML = createTable(data);
+    document.getElementById('service-count-output').innerHTML = createTable(headers,data);
 }
 
 async function fetchTotalCost() {
@@ -91,7 +100,8 @@ async function fetchTotalCost() {
     const end = document.getElementById('cost-end').value;
     const res = await fetch(`/api/total_cost?start=${start}&end=${end}`);
     const data = await res.json();
-    document.getElementById('total-cost-output').innerHTML = `<strong>Total Cost:</strong> $${data.total_cost}`;
+    console.log(data)
+    document.getElementById('total-cost-output').innerHTML = `<strong>Total Cost:</strong> $${data[0]}`;
 }
 
 async function fetchTechJobs() {

@@ -383,16 +383,32 @@ def service_count():
     service_id = request.args.get('service_id')
     start = request.args.get('start')
     end = request.args.get('end')
+
     query = '''
-        SELECT DATE(a.appointment_datetime) AS day, COUNT(*) AS count
+        SELECT a.appointment_datetime,
+            cust.first_name || ' ' || cust.last_name AS customer_name,
+            tech.first_name || ' ' || tech.last_name AS technician_name,
+            s.title AS service_title, 
+            c.make, c.model, c.license_plate, s.cost
         FROM appointment_services aps
         JOIN appointments a ON aps.appointment_id = a.id
-        WHERE aps.service_id = ? AND DATE(a.appointment_datetime) BETWEEN ? AND ?
-        GROUP BY day
-        ORDER BY day
+        JOIN cars c ON a.car_id = c.id
+        JOIN customers cust ON a.customer_id = cust.id
+        JOIN services s ON aps.service_id = s.id
+        JOIN technicians tech ON aps.technician_id = tech.id
+        WHERE aps.service_id = ? AND a.appointment_datetime BETWEEN ? AND ?
+        GROUP BY a.appointment_datetime
+        ORDER BY a.appointment_datetime
     '''
     result = query_db(query, [service_id, start, end])
-    return jsonify([{"appointment_datetime" : r[0]}
+    return jsonify([{"appointment_datetime": r[0],
+                     "customer_name" : r[1],
+                     "technician_name" : r[2],
+                     "service_title" : r[3],
+                     "make" : r[4],
+                     "model" : r[5],
+                     "license_plate" : r[6],
+                     "cost" : r[7]}
                     for r in result])
 
 @app.route('/api/total_cost')
@@ -406,7 +422,7 @@ def total_cost():
         JOIN services s ON aps.service_id = s.id
         WHERE DATE(a.appointment_datetime) BETWEEN ? AND ?
     '''
-    return jsonify(query_db(query, [start, end], one=True))
+    return jsonify(query_db(query, [start, end] ))
 
 @app.route('/api/tech_jobs')
 def tech_jobs():
