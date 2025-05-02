@@ -3,6 +3,11 @@ function formatDate(isoString) {
     const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(isoString).toLocaleString(undefined, options);
 }
+function fetchAll() {
+    fetchServices();
+    fetchTechnicians();
+    fetchCustomers();
+}
 
 function fetchServices() {
     fetch('/get_services')
@@ -21,7 +26,53 @@ function fetchServices() {
         });
 }
 
-function createTable(headers, data) {
+function fetchTechnicians() {
+    fetch('/get_technicians')
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById('technicianSelect');
+            if (select) {
+                select.innerHTML = '<option value="" disabled selected>Select a technician</option>';
+                data.forEach(tech => {
+                    const opt = document.createElement('option');
+                    opt.value = tech.id;
+                    opt.textContent = `${tech.first_name} ${tech.last_name}`;
+                    select.appendChild(opt);
+                });
+            }
+        });
+}
+
+function fetchCustomers() {
+    fetch('/get_customers')
+        .then(res => res.json())
+        .then(data => {
+            const selects = [document.getElementById('customerSelect'), document.getElementById('appointmentCustomerSelect')];
+            selects.forEach(select => {
+                if (!select) return;
+                select.innerHTML = '<option value="" disabled selected>Select a customer</option>';
+                data.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = `${c.first_name} ${c.last_name}`;
+                    select.appendChild(opt);
+                });
+            });
+        });
+}
+
+function createTable(data) {
+
+    const headers = [
+        "appointment_datetime",
+        "customer_name",
+        "technician_name",
+        "service_title",
+        "make",
+        "model",
+        "license_plate",
+        "cost"
+    ];
     if (!data.length) return '<em>No results</em>';
     console.log(headers);
     console.log(data);
@@ -60,39 +111,20 @@ function createTable(headers, data) {
 
 
 async function fetchJobsByDay() {
-    const headers = [
-        "appointment_datetime",
-        "customer_name",
-        "technician_name",
-        "service_title",
-        "make",
-        "model",
-        "license_plate",
-        "cost"
-    ];
+
     const date = document.getElementById('jobs-date').value;
     const res = await fetch(`/api/jobs_by_day?date=${date}`);
     const data = await res.json();
-    document.getElementById('jobs-output').innerHTML = createTable(headers, data);
+    document.getElementById('jobs-output').innerHTML = createTable(data);
 }
 
 async function fetchServiceCount() {
-    const headers = [
-        "appointment_datetime",
-        "customer_name",
-        "technician_name",
-        "service_title",
-        "make",
-        "model",
-        "license_plate",
-        "cost"
-    ];
     const id = document.getElementById('serviceSelect').value;
     const start = document.getElementById('service-start').value;
     const end = document.getElementById('service-end').value;
     const res = await fetch(`/api/service_count?service_id=${id}&start=${start}&end=${end}`);
     const data = await res.json();
-    document.getElementById('service-count-output').innerHTML = createTable(headers,data);
+    document.getElementById('service-count-output').innerHTML = createTable(data);
 }
 
 async function fetchTotalCost() {
@@ -105,7 +137,7 @@ async function fetchTotalCost() {
 }
 
 async function fetchTechJobs() {
-    const id = document.getElementById('tech-id').value;
+    const id = document.getElementById('technicianSelect').value
     const start = document.getElementById('tech-start').value;
     const end = document.getElementById('tech-end').value;
     const res = await fetch(`/api/tech_jobs?tech_id=${id}&start=${start}&end=${end}`);
@@ -114,7 +146,7 @@ async function fetchTechJobs() {
 }
 
 async function fetchCustomerServices() {
-    const id = document.getElementById('cust-id').value;
+    const id = document.getElementById('customerSelect').value;
     const res = await fetch(`/api/customer_services?customer_id=${id}`);
     const data = await res.json();
     document.getElementById('cust-services-output').innerHTML = createTable(data);
@@ -123,7 +155,7 @@ async function fetchCustomerServices() {
 async function fetchIdleTechs() {
     const res = await fetch('/api/idle_techs');
     const data = await res.json();
-    document.getElementById('idle-techs-output').innerHTML = createTable(data);
+    document.getElementById('idle-techs-output').innerHTML = `<strong>Idle Techs</strong> ${data[0]}`;
 }
 
 async function fetchTopTech() {
@@ -131,24 +163,6 @@ async function fetchTopTech() {
     const end = document.getElementById('top-end').value;
     const res = await fetch(`/api/top_tech?start=${start}&end=${end}`);
     const data = await res.json();
-    document.getElementById('top-tech-output').innerHTML = data.name ? `<strong>${data.name}</strong> - $${data.total}` : '<em>No data</em>';
-}
-
-async function fetchServicePercentages() {
-    const start = document.getElementById('percent-start').value;
-    const end = document.getElementById('percent-end').value;
-    const res = await fetch(`/api/service_percentages?start=${start}&end=${end}`);
-    const data = await res.json();
-    const ctx = document.getElementById('percentChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: data.map(row => row.name),
-            datasets: [{
-                label: 'Service Percentages',
-                data: data.map(row => row.percent),
-                backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6f42c1']
-            }]
-        }
-    });
+    console.log(data);
+    document.getElementById('top-tech-output').innerHTML = data[0] ? `<strong>${data[0]}</strong> - $${data[1]}` : '<em>No data</em>';
 }

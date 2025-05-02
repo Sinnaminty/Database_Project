@@ -430,35 +430,63 @@ def tech_jobs():
     start = request.args.get('start')
     end = request.args.get('end')
     query = '''
-        SELECT c.make, c.model, c.license_plate,
-               cust.first_name || ' ' || cust.last_name AS customer_name,
-               s.title AS service_title, a.appointment_datetime
+        SELECT a.appointment_datetime,
+            cust.first_name || ' ' || cust.last_name AS customer_name,
+            tech.first_name || ' ' || tech.last_name AS technician_name,
+            s.title AS service_title, 
+            c.make, c.model, c.license_plate, s.cost
         FROM appointment_services aps
         JOIN appointments a ON aps.appointment_id = a.id
         JOIN cars c ON a.car_id = c.id
         JOIN customers cust ON a.customer_id = cust.id
         JOIN services s ON aps.service_id = s.id
+        JOIN technicians tech ON aps.technician_id = tech.id
         WHERE aps.technician_id = ? AND DATE(a.appointment_datetime) BETWEEN ? AND ?
-        ORDER BY c.id, a.appointment_datetime
+        GROUP BY a.appointment_datetime
+        ORDER BY a.appointment_datetime, c.id
     '''
-    return jsonify(query_db(query, [tech_id, start, end]))
+
+    result = query_db(query, [tech_id, start, end])
+    return jsonify([{"appointment_datetime": r[0],
+                     "customer_name" : r[1],
+                     "technician_name" : r[2],
+                     "service_title" : r[3],
+                     "make" : r[4],
+                     "model" : r[5],
+                     "license_plate" : r[6],
+                     "cost" : r[7]}
+                    for r in result])
 
 @app.route('/api/customer_services')
 def customer_services():
     customer_id = request.args.get('customer_id')
     query = '''
-        SELECT c.make, c.model, c.license_plate, a.appointment_datetime,
-               s.title AS service_title, s.cost,
-               tech.first_name || ' ' || tech.last_name AS technician_name
-        FROM cars c
-        JOIN appointments a ON c.id = a.car_id
-        JOIN appointment_services aps ON a.id = aps.appointment_id
+        SELECT a.appointment_datetime,
+            cust.first_name || ' ' || cust.last_name AS customer_name,
+            tech.first_name || ' ' || tech.last_name AS technician_name,
+            s.title AS service_title, 
+            c.make, c.model, c.license_plate, s.cost
+        FROM appointment_services aps
+        JOIN appointments a ON aps.appointment_id = a.id
+        JOIN cars c ON a.car_id = c.id
+        JOIN customers cust ON a.customer_id = cust.id
         JOIN services s ON aps.service_id = s.id
-        LEFT JOIN technicians tech ON aps.technician_id = tech.id
+        JOIN technicians tech ON aps.technician_id = tech.id
         WHERE c.id IN (SELECT car_id FROM customer_cars WHERE customer_id = ?)
-        ORDER BY c.id, a.appointment_datetime
+        GROUP BY a.appointment_datetime
+        ORDER BY a.appointment_datetime, c.id
     '''
-    return jsonify(query_db(query, [customer_id]))
+    result = query_db(query, [customer_id])
+    return jsonify([{"appointment_datetime": r[0],
+                     "customer_name" : r[1],
+                     "technician_name" : r[2],
+                     "service_title" : r[3],
+                     "make" : r[4],
+                     "model" : r[5],
+                     "license_plate" : r[6],
+                     "cost" : r[7]}
+                    for r in result])
+    
 
 @app.route('/api/idle_techs')
 def idle_techs():
@@ -487,7 +515,7 @@ def top_tech():
         LIMIT 1
     '''
     result = query_db(query, [start, end], one=True)
-    return jsonify(dict(result) if result else {})
+    return jsonify(result if result else {})
 
 @app.route('/api/service_percentages')
 def service_percentages():

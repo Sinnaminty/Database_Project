@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
-<body onload = "fetchServices()"class="p-4">
+<body onload="fetchAll()" class="p-4">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="mb-0">Mechanic Shop Dashboard</h1>
@@ -44,7 +44,9 @@
 
         <div class="mb-4">
             <h4>Technician Jobs</h4>
-            <input type="text" id="tech-id" placeholder="Technician ID" class="form-control w-auto d-inline-block">
+            <select id="technicianSelect" class="form-select mb-2" required>
+                <option value="" disabled selected>Select Technician</option>
+            </select>
             <input type="date" id="tech-start" class="form-control w-auto d-inline-block">
             <input type="date" id="tech-end" class="form-control w-auto d-inline-block">
             <button class="btn btn-primary" onclick="fetchTechJobs()">Fetch</button>
@@ -53,7 +55,9 @@
 
         <div class="mb-4">
             <h4>Customer Services</h4>
-            <input type="text" id="cust-id" placeholder="Customer ID" class="form-control w-auto d-inline-block">
+            <select id="customerSelect" class="form-select mb-2" required>
+                <option value="" disabled selected>Select Customer</option>
+            </select>
             <button class="btn btn-primary" onclick="fetchCustomerServices()">Fetch</button>
             <div id="cust-services-output"></div>
         </div>
@@ -72,16 +76,7 @@
             <div id="top-tech-output"></div>
         </div>
 
-        <div class="mb-4">
-            <h4>Service Percentages</h4>
-            <input type="date" id="percent-start" class="form-control w-auto d-inline-block">
-            <input type="date" id="percent-end" class="form-control w-auto d-inline-block">
-            <button class="btn btn-info" onclick="fetchServicePercentages()">Graph</button>
-            <canvas id="percentChart" width="400" height="200"></canvas>
-        </div>
-    </div>
-
-    <script src="/static/view.js"></script>
+        <script src="/static/view.js"></script>
 
 </body>
 
